@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor de Aforo - IoT Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between p-6">
+
+<header class="max-w-4xl mx-auto w-full flex justify-between items-center py-4 border-b border-slate-800">
+<div class="flex items-center space-x-3">
+<div class="w-3 h-3 bg-cyan-500 rounded-full animate-ping"></div>
+<h1 class="text-xl font-bold tracking-wider text-white">CONTROL DE ACCESO IOT</h1>
+</div>
+<span class="text-xs px-3 py-1 bg-slate-900 border border-slate-700 rounded-full text-slate-400">Firebase Realtime</span>
+</header>
+
+<main class="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 my-auto py-10">
+
+<div id="status-card" class="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center transition-all duration-500">
+<div id="status-icon" class="w-24 h-24 rounded-full flex items-center justify-center bg-slate-800 text-slate-400 mb-6 text-4xl transition-all duration-300">
+🏢
+</div>
+<h2 class="text-slate-400 text-sm font-semibold uppercase tracking-widest mb-1">Estado del Sistema</h2>
+<p id="status-text" class="text-3xl font-bold tracking-wide text-slate-200">Monitoreando...</p>
+</div>
+
+<div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col justify-between">
+<div>
+<span class="text-xs font-semibold uppercase tracking-widest text-slate-500">Capacidad y Flujo</span>
+<h3 class="text-xl font-bold text-white mt-1">Personas en el Local</h3>
+</div>
+<div class="my-6">
+<span id="counter-value" class="text-6xl font-extrabold text-cyan-400">0</span>
+<span class="text-slate-500 text-lg ml-2">dentro</span>
+</div>
+<p class="text-xs text-slate-500">Suma automática de entradas y restas de salidas.</p>
+</div>
+
+</main>
+
+<section class="max-w-4xl mx-auto w-full bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 mb-6 text-center">
+<h3 class="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-4">🛠️ Panel de Pruebas Manuales (Simulador Web)</h3>
+<div class="flex justify-center gap-4 flex-wrap">
+<button id="btn-simular-entrada" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+➕ Simular Entrada (+1)
+</button>
+<button id="btn-simular-salida" class="px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-orange-900/30 flex items-center gap-2">
+➖ Simular Salida (-1)
+</button>
+</div>
+</section>
+
+<footer class="max-w-4xl mx-auto w-full text-center text-xs text-slate-600 border-t border-slate-900 pt-4">
+Proyecto de Automatización e IoT &bull; UBA / Secundario
+</footer>
+
+<script type="module" src="java.js"></script>
+</body>
+</html>

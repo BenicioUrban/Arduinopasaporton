@@ -1,0 +1,15 @@
+body {
+    font-family: 'Outfit', sans-serif;
+    }
+    
+    .glow-cyan {
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.4);
+    }
+    
+    .glow-active {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+    }
+    
+    button {
+    cursor: pointer;
+    }
