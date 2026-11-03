@@ -1,102 +1,136 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
 
 :root {
---bg-deep: #030712;
---bg-card: rgba(15, 23, 42, 0.6);
---border-glass: rgba(255, 255, 255, 0.08);
---neon-cyan: #06b6d4;
---neon-emerald: #10b981;
---neon-orange: #f97316;
---neon-purple: #8b5cf6;
+--bg-dark: #03050b;
+--card-bg: rgba(13, 18, 36, 0.75);
+--border-color: rgba(255, 255, 255, 0.08);
+--cyan-glow: #00f2fe;
+--purple-glow: #7928ca;
 }
 
 body {
-font-family: 'Plus Jakarta Sans', sans-serif;
-background-color: var(--bg-deep);
-background-image:
-radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
-radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
-linear-gradient(to bottom, #030712, #020617);
-color: #f8fafc;
+font-family: 'Outfit', sans-serif;
+background-color: var(--bg-dark);
+color: #f1f5f9;
 overflow-x: hidden;
+position: relative;
+min-height: 100vh;
 }
 
-h1, h2, h3, .font-orbitron {
-font-family: 'Orbitron', sans-serif;
+/* --- EFECTO DE ESTRELLAS EN PARALAJE (FONDO ANIMADO) --- */
+
+/* Capa 1: Estrellas lejanas (Chicas, numerosas, bajando más rápido) */
+body::before {
+content: "";
+position: fixed;
+top: -100%;
+left: 0;
+width: 100%;
+height: 200%;
+background-image:
+radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+radial-gradient(1px 1px at 40px 70px, #00f2fe, rgba(0,0,0,0)),
+radial-gradient(1px 1px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+radial-gradient(1.5px 1.5px at 130px 80px, #7928ca, rgba(0,0,0,0)),
+radial-gradient(1px 1px at 160px 120px, #ffffff, rgba(0,0,0,0));
+background-repeat: repeat;
+background-size: 200px 200px;
+animation: bajarEstrellas 6s linear infinite;
+z-index: -2;
+opacity: 0.6;
 }
 
-/* Tarjetas con Efecto Glassmorphism Futurista */
+/* Capa 2: Estrellas intermedias (Medianas, velocidad normal) */
+body::after {
+content: "";
+position: fixed;
+top: -100%;
+left: 0;
+width: 100%;
+height: 200%;
+background-image:
+radial-gradient(2px 2px at 50px 50px, #ffffff, rgba(0,0,0,0)),
+radial-gradient(2px 2px at 120px 150px, #00f2fe, rgba(0,0,0,0)),
+radial-gradient(2px 2px at 180px 90px, #ffffff, rgba(0,0,0,0));
+background-repeat: repeat;
+background-size: 350px 350px;
+animation: bajarEstrellas 12s linear infinite;
+z-index: -2;
+opacity: 0.8;
+}
+
+/* Capa 3 simulada mediante contenedor o sombras adicionales para las más cercanas y grandes (Lentas) */
+.star-layer-close {
+position: fixed;
+top: -100%;
+left: 0;
+width: 100%;
+height: 200%;
+background-image:
+radial-gradient(3.5px 3.5px at 100px 100px, #ffffff, rgba(0,0,0,0)),
+radial-gradient(3px 3.5px at 250px 250px, #00f2fe, rgba(0,0,0,0)),
+radial-gradient(3px 3px at 400px 150px, #ffffff, rgba(0,0,0,0));
+background-repeat: repeat;
+background-size: 500px 500px;
+animation: bajarEstrellas 25s linear infinite;
+z-index: -2;
+pointer-events: none;
+opacity: 1;
+}
+
+@keyframes bajarEstrellas {
+0% {
+transform: translateY(0);
+}
+100% {
+transform: translateY(50%);
+}
+}
+
+/* ----------------------------------------------------- */
+
 .futuristic-card {
-background: var(--bg-card);
-backdrop-filter: blur(16px);
--webkit-backdrop-filter: blur(16px);
-border: 1px solid var(--border-glass);
-box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+background: var(--card-bg);
+backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
+border: 1px solid var(--border-color);
+box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+transition: all 0.4s ease;
 }
 
 .futuristic-card:hover {
-border-color: rgba(6, 182, 212, 0.3);
-box-shadow: 0 0 30px rgba(6, 182, 212, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+border-color: rgba(0, 242, 254, 0.3);
+box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
 }
 
-/* Efectos de Brillo Neón Activos */
 .glow-cyan {
-box-shadow: 0 0 40px rgba(6, 182, 212, 0.35), inset 0 0 15px rgba(6, 182, 212, 0.2);
+box-shadow: 0 0 35px rgba(0, 242, 254, 0.35);
 }
 
 .glow-active {
-box-shadow: 0 0 40px rgba(249, 115, 22, 0.35), inset 0 0 15px rgba(249, 115, 22, 0.2);
+box-shadow: 0 0 35px rgba(239, 68, 68, 0.4);
 }
 
-/* Botones con Estilo Cyber / Neón */
-.cyber-button {
-position: relative;
-overflow: hidden;
-transition: all 0.3s ease;
-border: 1px solid rgba(255, 255, 255, 0.1);
+button {
 cursor: pointer;
+transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.cyber-button::before {
-content: '';
-position: absolute;
-top: 0; left: -100%;
-width: 100%; height: 100%;
-background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-transition: 0.5s;
+button:active {
+transform: scale(0.96);
 }
 
-.cyber-button:hover::before {
-left: 100%;
-}
-
-.cyber-button:active {
-transform: scale(0.97);
-}
-
-/* Animaciones personalizadas */
-@keyframes pulseGlow {
-0%, 100% { opacity: 0.4; }
-50% { opacity: 0.8; }
-}
-
-.animate-pulse-glow {
-animation: pulseGlow 3s infinite ease-in-out;
-}
-
-/* Scrollbar personalizada futurista */
 ::-webkit-scrollbar {
-width: 8px;
+width: 6px;
 }
 ::-webkit-scrollbar-track {
-background: #030712;
+background: var(--bg-dark);
 }
 ::-webkit-scrollbar-thumb {
 background: #1e293b;
-border-radius: 4px;
-border: 1px solid rgba(255, 255, 255, 0.05);
+border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-background: #06b6d4;
+background: var(--cyan-glow);
 }
