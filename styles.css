@@ -1,15 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+--bg-deep: #030712;
+--bg-card: rgba(15, 23, 42, 0.6);
+--border-glass: rgba(255, 255, 255, 0.08);
+--neon-cyan: #06b6d4;
+--neon-emerald: #10b981;
+--neon-orange: #f97316;
+--neon-purple: #8b5cf6;
+}
+
 body {
-    font-family: 'Outfit', sans-serif;
-    }
-    
-    .glow-cyan {
-    box-shadow: 0 0 30px rgba(6, 182, 212, 0.4);
-    }
-    
-    .glow-active {
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
-    }
-    
-    button {
-    cursor: pointer;
-    }
+font-family: 'Plus Jakarta Sans', sans-serif;
+background-color: var(--bg-deep);
+background-image:
+radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
+radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+linear-gradient(to bottom, #030712, #020617);
+color: #f8fafc;
+overflow-x: hidden;
+}
+
+h1, h2, h3, .font-orbitron {
+font-family: 'Orbitron', sans-serif;
+}
+
+/* Tarjetas con Efecto Glassmorphism Futurista */
+.futuristic-card {
+background: var(--bg-card);
+backdrop-filter: blur(16px);
+-webkit-backdrop-filter: blur(16px);
+border: 1px solid var(--border-glass);
+box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.futuristic-card:hover {
+border-color: rgba(6, 182, 212, 0.3);
+box-shadow: 0 0 30px rgba(6, 182, 212, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Efectos de Brillo Neón Activos */
+.glow-cyan {
+box-shadow: 0 0 40px rgba(6, 182, 212, 0.35), inset 0 0 15px rgba(6, 182, 212, 0.2);
+}
+
+.glow-active {
+box-shadow: 0 0 40px rgba(249, 115, 22, 0.35), inset 0 0 15px rgba(249, 115, 22, 0.2);
+}
+
+/* Botones con Estilo Cyber / Neón */
+.cyber-button {
+position: relative;
+overflow: hidden;
+transition: all 0.3s ease;
+border: 1px solid rgba(255, 255, 255, 0.1);
+cursor: pointer;
+}
+
+.cyber-button::before {
+content: '';
+position: absolute;
+top: 0; left: -100%;
+width: 100%; height: 100%;
+background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+transition: 0.5s;
+}
+
+.cyber-button:hover::before {
+left: 100%;
+}
+
+.cyber-button:active {
+transform: scale(0.97);
+}
+
+/* Animaciones personalizadas */
+@keyframes pulseGlow {
+0%, 100% { opacity: 0.4; }
+50% { opacity: 0.8; }
+}
+
+.animate-pulse-glow {
+animation: pulseGlow 3s infinite ease-in-out;
+}
+
+/* Scrollbar personalizada futurista */
+::-webkit-scrollbar {
+width: 8px;
+}
+::-webkit-scrollbar-track {
+background: #030712;
+}
+::-webkit-scrollbar-thumb {
+background: #1e293b;
+border-radius: 4px;
+border: 1px solid rgba(255, 255, 255, 0.05);
+}
+::-webkit-scrollbar-thumb:hover {
+background: #06b6d4;
+}
