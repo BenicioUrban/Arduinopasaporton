@@ -19,6 +19,10 @@ const statusCard = document.getElementById('status-card');
 const statusIcon = document.getElementById('status-icon');
 const statusText = document.getElementById('status-text');
 const counterValue = document.getElementById('counter-value');
+const tempValue = document.getElementById('temp-value');
+const tempNivel = document.getElementById('temp-nivel');
+const humValue = document.getElementById('hum-value');
+const tempUpdate = document.getElementById('temp-update');
 const btnSimularEntrada = document.getElementById('btn-simular-entrada');
 const btnSimularSalida = document.getElementById('btn-simular-salida');
 
@@ -70,6 +74,46 @@ onValue(ref(db, 'sensor_pir'), (snapshot) => {
     console.error("Error de Firebase:", error.message);
     statusText.innerText = "Sin conexión con la base";
 });
+
+// ---------- Temperatura y humedad (DHT22) ----------
+function nivelTemperatura(t) {
+    if (t < 10) return { texto: "Frío", clase: "text-sky-400" };
+    if (t < 18) return { texto: "Fresco", clase: "text-cyan-400" };
+    if (t < 27) return { texto: "Confortable", clase: "text-emerald-400" };
+    if (t < 33) return { texto: "Cálido", clase: "text-amber-400" };
+    return { texto: "Calor intenso", clase: "text-red-400" };
+}
+
+let offsetServidor = 0;          // diferencia entre el reloj de esta PC y el de Firebase
+let ultimaActualizacion = null;  // hora (según Firebase) de la última medición
+
+onValue(ref(db, '.info/serverTimeOffset'), (snap) => { offsetServidor = snap.val() || 0; });
+
+onValue(ref(db, 'sensor_dht'), (snapshot) => {
+    const d = snapshot.val();
+    if (!d || typeof d.temperatura !== 'number') return;
+
+    const nivel = nivelTemperatura(d.temperatura);
+    tempValue.innerText = d.temperatura.toFixed(1);
+    tempValue.className = "text-6xl font-extrabold " + nivel.clase;
+    tempNivel.innerText = nivel.texto;
+    tempNivel.className = "text-sm font-semibold " + nivel.clase;
+    humValue.innerText = typeof d.humedad === 'number' ? d.humedad.toFixed(0) : "--";
+    ultimaActualizacion = d.actualizado ?? null;
+});
+
+// Cada segundo: "hace X s" o aviso si el sensor dejó de enviar datos
+setInterval(() => {
+    if (ultimaActualizacion === null) return;
+    const seg = Math.round((Date.now() + offsetServidor - ultimaActualizacion) / 1000);
+    if (seg < 60) {
+        tempUpdate.innerText = "🟢 En línea · actualizado hace " + Math.max(seg, 0) + " s";
+        tempUpdate.className = "text-xs text-emerald-400 mt-1";
+    } else {
+        tempUpdate.innerText = "🔴 Sin señal del sensor hace " + Math.floor(seg / 60) + " min";
+        tempUpdate.className = "text-xs text-red-400 mt-1";
+    }
+}, 1000);
 
 // ---------- Simulador manual (botones de la página) ----------
 async function simularMovimiento(tipo) {
