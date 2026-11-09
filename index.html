@@ -57,6 +57,19 @@
 </div>
 </div>
 
+<!-- NUEVO: historial (gráfico) -->
+<div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+<div>
+<span class="text-xs font-semibold uppercase tracking-widest text-slate-500">Historial</span>
+<h3 class="text-xl font-bold text-white mt-1">Personas, temperatura y humedad</h3>
+</div>
+<div id="grafico-periodos" class="flex flex-wrap gap-2"></div>
+</div>
+<div class="relative h-72 sm:h-96"><canvas id="grafico"></canvas></div>
+<p id="grafico-estado" class="text-xs text-slate-500 mt-4">Cargando historial...</p>
+</div>
+
 </main>
 
 <section class="max-w-4xl mx-auto w-full bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 mb-6 text-center">
@@ -75,6 +88,8 @@
 Proyecto de Automatización e IoT &bull; UBA / Secundario
 </footer>
 
-<script type="module" src="java.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script type="module" src="java.js?v=3"></script>
 </body>
 </html>
