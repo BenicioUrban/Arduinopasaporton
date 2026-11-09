@@ -40,6 +40,23 @@
 <p class="text-xs text-slate-500">Suma automática de entradas y restas de salidas.</p>
 </div>
 
+<!-- NUEVO: temperatura y humedad del aire (DHT22) -->
+<div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+<div class="text-center sm:text-left">
+<span class="text-xs font-semibold uppercase tracking-widest text-slate-500">Condiciones Ambientales</span>
+<h3 class="text-xl font-bold text-white mt-1">Temperatura del Aire</h3>
+<p class="text-sm text-slate-400 mt-3">💧 Humedad: <span id="hum-value" class="font-semibold text-sky-400">--</span> %</p>
+<p id="temp-update" class="text-xs text-slate-500 mt-1">Esperando datos del sensor...</p>
+</div>
+<div class="text-center sm:text-right">
+<div>
+<span id="temp-value" class="text-6xl font-extrabold text-slate-500">--</span>
+<span class="text-slate-500 text-lg ml-1">°C</span>
+</div>
+<span id="temp-nivel" class="text-sm font-semibold text-slate-500">&nbsp;</span>
+</div>
+</div>
+
 </main>
 
 <section class="max-w-4xl mx-auto w-full bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 mb-6 text-center">
