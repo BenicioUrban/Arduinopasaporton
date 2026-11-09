@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, get, update, query, orderByChild, startAt, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAZzTkaGXdrCMPdxyIPfw51UW-mOckATsE",
@@ -23,6 +23,9 @@ const tempValue = document.getElementById('temp-value');
 const tempNivel = document.getElementById('temp-nivel');
 const humValue = document.getElementById('hum-value');
 const tempUpdate = document.getElementById('temp-update');
+const graficoCanvas = document.getElementById('grafico');
+const graficoPeriodos = document.getElementById('grafico-periodos');
+const graficoEstado = document.getElementById('grafico-estado');
 const btnSimularEntrada = document.getElementById('btn-simular-entrada');
 const btnSimularSalida = document.getElementById('btn-simular-salida');
 
@@ -91,15 +94,24 @@ onValue(ref(db, '.info/serverTimeOffset'), (snap) => { offsetServidor = snap.val
 
 onValue(ref(db, 'sensor_dht'), (snapshot) => {
     const d = snapshot.val();
-    if (!d || typeof d.temperatura !== 'number') return;
+    console.log("sensor_dht recibido:", d);   // para depurar: F12 > Consola
+    if (!d) return;
 
-    const nivel = nivelTemperatura(d.temperatura);
-    tempValue.innerText = d.temperatura.toFixed(1);
+    const temp = Number(d.temperatura);
+    if (Number.isNaN(temp)) return;
+
+    const hum = Number(d.humedad);
+    const nivel = nivelTemperatura(temp);
+    tempValue.innerText = temp.toFixed(1);
     tempValue.className = "text-6xl font-extrabold " + nivel.clase;
     tempNivel.innerText = nivel.texto;
     tempNivel.className = "text-sm font-semibold " + nivel.clase;
-    humValue.innerText = typeof d.humedad === 'number' ? d.humedad.toFixed(0) : "--";
+    humValue.innerText = Number.isNaN(hum) ? "--" : hum.toFixed(0);
     ultimaActualizacion = d.actualizado ?? null;
+}, (error) => {
+    console.error("Error leyendo sensor_dht:", error.message);
+    tempUpdate.innerText = "⚠️ No se pueden leer los datos de temperatura (revisá las reglas)";
+    tempUpdate.className = "text-xs text-red-400 mt-1";
 });
 
 // Cada segundo: "hace X s" o aviso si el sensor dejó de enviar datos
@@ -114,6 +126,209 @@ setInterval(() => {
         tempUpdate.className = "text-xs text-red-400 mt-1";
     }
 }, 1000);
+
+// ---------- Gráfico histórico (personas, temperatura y humedad) ----------
+// El ESP32 guarda un punto por minuto en Firebase (/historial). Por eso el gráfico se ve
+// igual desde cualquier dispositivo y no depende de que esta página estuviera abierta.
+const PERIODOS = [
+    { etiqueta: "30 min",   ms: 30 * 60 * 1000 },
+    { etiqueta: "1 h",      ms: 60 * 60 * 1000 },
+    { etiqueta: "2 h",      ms: 2 * 60 * 60 * 1000 },
+    { etiqueta: "6 h",      ms: 6 * 60 * 60 * 1000 },
+    { etiqueta: "12 h",     ms: 12 * 60 * 60 * 1000 },
+    { etiqueta: "1 día",    ms: 24 * 60 * 60 * 1000 },
+    { etiqueta: "3 días",   ms: 3 * 24 * 60 * 60 * 1000 },
+    { etiqueta: "1 semana", ms: 7 * 24 * 60 * 60 * 1000 }
+];
+
+const COLOR_PERSONAS = "#22d3ee";               // cian, como el contador
+const COLOR_TEMP = "hsl(32, 95%, 55%)";         // naranja
+const COLOR_HUM = "hsla(32, 30%, 62%, 0.6)";    // mismo tono, menos saturado y transparente
+const COLOR_HUM_TEXTO = "hsl(32, 30%, 62%)";    // igual pero sin transparencia (números del eje)
+
+let periodoActual = PERIODOS[1];   // arranca en 1 hora
+let ventanaCargadaMs = 0;          // cuánta historia hay descargada
+let registros = [];
+let detenerHistorial = null;
+let grafico = null;
+let renderPendiente = null;
+
+function crearGrafico() {
+    try {
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(148, 163, 184, 0.12)';
+        Chart.defaults.font.family = "Outfit, sans-serif";
+        return new Chart(graficoCanvas, {
+            type: 'line',
+            data: {
+                datasets: [
+                    { label: 'Personas dentro', yAxisID: 'yPersonas', data: [],
+                      borderColor: COLOR_PERSONAS, backgroundColor: 'rgba(34, 211, 238, 0.12)',
+                      fill: true, stepped: 'after', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4 },
+                    { label: 'Temperatura (°C)', yAxisID: 'yTemp', data: [],
+                      borderColor: COLOR_TEMP, backgroundColor: COLOR_TEMP,
+                      borderWidth: 2.5, tension: 0.35, pointRadius: 0, pointHoverRadius: 4 },
+                    { label: 'Humedad (%)', yAxisID: 'yHum', data: [],
+                      borderColor: COLOR_HUM, backgroundColor: COLOR_HUM,
+                      borderWidth: 2, borderDash: [6, 5], tension: 0.35, pointRadius: 0, pointHoverRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { labels: { boxWidth: 28, boxHeight: 3 } },
+                    tooltip: { filter: (item) => item.parsed.y !== null }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: { tooltipFormat: 'dd/MM HH:mm', displayFormats: { minute: 'HH:mm', hour: 'HH:mm', day: 'dd/MM' } },
+                        ticks: { maxRotation: 0, autoSkipPadding: 24 }
+                    },
+                    yPersonas: { position: 'left', beginAtZero: true, suggestedMax: 4,
+                                 ticks: { precision: 0, color: COLOR_PERSONAS } },
+                    yTemp: { position: 'right', grid: { drawOnChartArea: false },
+                             ticks: { color: COLOR_TEMP, callback: (v) => v + ' °C' } },
+                    yHum: { position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false },
+                            ticks: { color: COLOR_HUM_TEXTO, callback: (v) => v + ' %' } }
+                }
+            }
+        });
+    } catch (e) {
+        console.error("Gráfico:", e);
+        graficoEstado.innerText = "No se pudo cargar la librería del gráfico (¿hay internet?).";
+        return null;
+    }
+}
+
+function actualizarGrafico() {
+    if (!grafico) return;
+    const ahora = Date.now() + offsetServidor;
+    const desde = ahora - periodoActual.ms;
+    registros = registros.filter((r) => r.ts >= ahora - ventanaCargadaMs);
+
+    // Para períodos largos se agrupan los puntos (promedio de temperatura y humedad,
+    // máximo de personas) y así el gráfico queda liviano.
+    const bucketMs = Math.max(60 * 1000, periodoActual.ms / 400);
+    const gapMs = Math.max(bucketMs * 3, 4 * 60 * 1000);   // más que esto sin datos = ESP32 apagado
+
+    const grupos = new Map();
+    let cantidad = 0;
+    for (const r of registros) {
+        if (r.ts < desde) continue;
+        cantidad++;
+        const k = Math.floor(r.ts / bucketMs);
+        const g = grupos.get(k) || { n: 0, ts: 0, temp: 0, hum: 0, pers: 0 };
+        g.n++;
+        g.ts += r.ts;
+        g.temp += r.temp;
+        g.hum += r.hum;
+        g.pers = Math.max(g.pers, r.pers);
+        grupos.set(k, g);
+    }
+
+    const pers = [], temp = [], hum = [];
+    let xPrev = null;
+    for (const k of [...grupos.keys()].sort((a, b) => a - b)) {
+        const g = grupos.get(k);
+        const x = g.ts / g.n;
+        if (xPrev !== null && x - xPrev > gapMs) {          // hueco: se corta la línea
+            pers.push({ x: xPrev + 1, y: null });
+            temp.push({ x: xPrev + 1, y: null });
+            hum.push({ x: xPrev + 1, y: null });
+        }
+        pers.push({ x, y: g.pers });
+        temp.push({ x, y: Math.round(g.temp / g.n * 10) / 10 });
+        hum.push({ x, y: Math.round(g.hum / g.n * 10) / 10 });
+        xPrev = x;
+    }
+
+    grafico.data.datasets[0].data = pers;
+    grafico.data.datasets[1].data = temp;
+    grafico.data.datasets[2].data = hum;
+    grafico.options.scales.x.min = desde;
+    grafico.options.scales.x.max = ahora;
+    grafico.update();
+
+    graficoEstado.innerText = cantidad > 0
+        ? cantidad + " registros en este período · se actualiza solo"
+        : "Todavía no hay datos en este período (el ESP32 guarda un punto por minuto).";
+}
+
+function pedirRender() {
+    clearTimeout(renderPendiente);
+    renderPendiente = setTimeout(actualizarGrafico, 200);
+}
+
+// Descarga el historial del período y se queda escuchando los puntos nuevos
+function suscribir() {
+    if (detenerHistorial) detenerHistorial();
+    registros = [];
+    graficoEstado.innerText = "Cargando historial...";
+    const desde = Date.now() + offsetServidor - ventanaCargadaMs;
+    const consulta = query(ref(db, 'historial'), orderByChild('ts'), startAt(desde));
+    detenerHistorial = onChildAdded(consulta, (snap) => {
+        const r = snap.val();
+        if (r && Number.isFinite(r.ts) && Number.isFinite(r.temp)) {
+            registros.push({
+                ts: r.ts,
+                temp: r.temp,
+                hum: Number.isFinite(r.hum) ? r.hum : 0,
+                pers: Number.isFinite(r.pers) ? r.pers : 0
+            });
+            pedirRender();
+        }
+    }, (error) => {
+        console.error("Error leyendo historial:", error.message);
+        graficoEstado.innerText = "⚠️ No se puede leer el historial (revisá las reglas de Firebase).";
+    });
+}
+
+function elegirPeriodo(p) {
+    periodoActual = p;
+    marcarBotones();
+    if (p.ms > ventanaCargadaMs) {      // hace falta bajar más historia
+        ventanaCargadaMs = p.ms;
+        suscribir();
+    } else {                            // ya está descargada: solo se redibuja
+        actualizarGrafico();
+    }
+}
+
+const ESTILO_BOTON = "px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ";
+const ESTILO_ACTIVO = "bg-cyan-600 text-white";
+const ESTILO_INACTIVO = "bg-slate-800 text-slate-400 hover:bg-slate-700";
+
+function marcarBotones() {
+    graficoPeriodos.querySelectorAll('button').forEach((b) => {
+        b.className = ESTILO_BOTON + (Number(b.dataset.ms) === periodoActual.ms ? ESTILO_ACTIVO : ESTILO_INACTIVO);
+    });
+}
+
+PERIODOS.forEach((p) => {
+    const b = document.createElement('button');
+    b.textContent = p.etiqueta;
+    b.dataset.ms = p.ms;
+    b.addEventListener('click', () => elegirPeriodo(p));
+    graficoPeriodos.appendChild(b);
+});
+marcarBotones();
+
+grafico = crearGrafico();
+
+// Arranca cuando ya se conoce la diferencia de reloj con Firebase
+let graficoIniciado = false;
+onValue(ref(db, '.info/serverTimeOffset'), () => {
+    if (!graficoIniciado && grafico) {
+        graficoIniciado = true;
+        elegirPeriodo(periodoActual);
+    }
+});
+
+setInterval(actualizarGrafico, 30000);   // hace avanzar la ventana de tiempo
 
 // ---------- Simulador manual (botones de la página) ----------
 async function simularMovimiento(tipo) {
